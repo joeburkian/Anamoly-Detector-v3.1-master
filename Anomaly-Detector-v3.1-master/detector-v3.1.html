@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Use a valid iro.js build to avoid "release not found" issues -->
+  <script src="https://cdn.jsdelivr.net/npm/@jaames/iro@latest/dist/iro.min.js"></script>
+  <link rel="stylesheet" href="style-v3.1.css">
+  <title>Color Anomaly Detection</title>
+</head>
+<body>
+    <!-- Back to home button -->
+    <button onclick="window.location.href='index-v3.1.html'" class="nav-button" aria-label="Return to home page">
+        Back to Home
+    </button>
+
+    <div id="detector-container">
+        <!-- Canvas Section -->
+        <div class="canvas-section">
+            <h3>Upload Image</h3>
+            <input type="file" id="image-input" aria-label="Upload an image for anomaly detection">
+            <canvas id="canvas"></canvas>
+        </div>
+
+        <!-- Controls Section -->
+        <div class="controls-section">
+            <!-- Detection Settings -->
+            <div class="control-group">
+                <h3>Detection Settings</h3>
+                <div class="selector">
+                    <label for="sensitivity-slider">Sensitivity:</label>
+                    <input type="range" id="sensitivity-slider" min="0" max="100" value="50" aria-label="Adjust sensitivity for anomaly detection">
+                </div>
+                <div class="selector">
+                    <label for="max-cluster-size">Max Cluster Size:</label>
+                    <input type="number" id="max-cluster-size" min="1" value="15" aria-label="Set maximum cluster size for anomalies">
+                </div>
+                <div class="selector">
+                    <label for="detection-mode">Detection Mode:</label>
+                    <select id="detection-mode" aria-label="Select color detection mode">
+                        <option value="rgb">RGB</option>
+                        <option value="cmyk">CMYK</option>
+                        <option value="both">Both</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Color Selection with Tabs -->
+            <div class="control-group color-selection">
+                <h3>Color Selection</h3>
+                <div class="tabs">
+                    <button class="tab-button active" data-tab="preset" aria-label="Show preset color options">
+                        Preset
+                    </button>
+                    <button class="tab-button" data-tab="custom" aria-label="Show custom color options">
+                        Custom
+                    </button>
+                </div>
+
+                <!-- PRESET TAB -->
+                <div class="tab-content" id="preset-tab">
+                    <button class="yellow-button" onclick="detectAnomalies('yellow')" aria-label="Detect yellow anomalies">Yellow Anomalies</button>
+                    <button class="red-button" onclick="detectAnomalies('red')" aria-label="Detect red anomalies">Red Anomalies</button>
+                    <button class="green-button" onclick="detectAnomalies('green')" aria-label="Detect green anomalies">Green Anomalies</button>
+                    <button class="blue-button" onclick="detectAnomalies('blue')" aria-label="Detect blue anomalies">Blue Anomalies</button>
+                </div>
+
+                <!-- CUSTOM TAB -->
+                <div class="tab-content hidden" id="custom-tab">
+                    <div class="color-wheel-container">
+                        <!-- iro.js will place the color wheel here -->
+                        <div id="color-wheel-container"></div>
+                        <button class="custom-button" onclick="detectAnomalies('custom')" aria-label="Detect custom color anomalies">
+                            Detect Custom Color
+                        </button>
+                    </div>
+
+                    <!-- SLIDERS -->
+                    <div class="sliders">
+                        <!-- RGB Sliders -->
+                        <div class="selector">
+                            <h4>RGB</h4>
+                            <div>
+                                <label>R:</label>
+                                <input 
+                                  type="range" 
+                                  id="rgb-r" 
+                                  min="0" 
+                                  max="255" 
+                                  value="255" 
+                                  aria-label="Red value for RGB color"
+                                >
+                                <span id="rgb-r-value">255</span>
+                            </div>
+                            <div>
+                                <label>G:</label>
+                                <input 
+                                  type="range" 
+                                  id="rgb-g" 
+                                  min="0" 
+                                  max="255" 
+                                  value="255" 
+                                  aria-label="Green value for RGB color"
+                                >
+                                <span id="rgb-g-value">255</span>
+                            </div>
+                            <div>
+                                <label>B:</label>
+                                <input 
+                                  type="range" 
+                                  id="rgb-b" 
+                                  min="0" 
+                                  max="255" 
+                                  value="255" 
+                                  aria-label="Blue value for RGB color"
+                                >
+                                <span id="rgb-b-value">255</span>
+                            </div>
+                            <div id="rgb-preview"></div>
+                        </div>
+
+                        <!-- CMYK Sliders -->
+                        <div class="selector">
+                            <h4>CMYK</h4>
+                            <div>
+                                <label>C:</label>
+                                <input 
+                                  type="range" 
+                                  id="cmyk-c" 
+                                  min="0" 
+                                  max="100" 
+                                  value="0" 
+                                  aria-label="Cyan value for CMYK color"
+                                >
+                                <span id="cmyk-c-value">0%</span>
+                            </div>
+                            <div>
+                                <label>M:</label>
+                                <input 
+                                  type="range" 
+                                  id="cmyk-m" 
+                                  min="0" 
+                                  max="100" 
+                                  value="0" 
+                                  aria-label="Magenta value for CMYK color"
+                                >
+                                <span id="cmyk-m-value">0%</span>
+                            </div>
+                            <div>
+                                <label>Y:</label>
+                                <input 
+                                  type="range" 
+                                  id="cmyk-y" 
+                                  min="0" 
+                                  max="100" 
+                                  value="0" 
+                                  aria-label="Yellow value for CMYK color"
+                                >
+                                <span id="cmyk-y-value">0%</span>
+                            </div>
+                            <div>
+                                <label>K:</label>
+                                <input 
+                                  type="range" 
+                                  id="cmyk-k" 
+                                  min="0" 
+                                  max="100" 
+                                  value="0" 
+                                  aria-label="Black value for CMYK color"
+                                >
+                                <span id="cmyk-k-value">0%</span>
+                            </div>
+                            <div id="cmyk-preview"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Anomaly Output -->
+            <div class="control-group">
+                <h3>Anomaly Output</h3>
+                <div class="selector">
+                    <label>
+                        <input 
+                          type="checkbox" 
+                          id="toggle-coordinates" 
+                          onchange="toggleCoordinateDisplay()" 
+                          aria-label="Toggle display of mouse coordinates"
+                        >
+                        Show Mouse Coordinates
+                    </label>
+                </div>
+                <div id="coordinates-output">
+                    <h4>Detected Anomalies Coordinates:</h4>
+                    <select id="sort-options" onchange="sortCoordinates()" aria-label="Sort detected anomalies">
+                        <option value="size-asc">Sort by Size (Small to Large)</option>
+                        <option value="size-desc">Sort by Size (Large to Small)</option>
+                        <option value="left-to-right">Sort Left to Right</option>
+                        <option value="top-to-bottom">Sort Top to Bottom</option>
+                    </select>
+                    <ul id="coordinates-list"></ul>
+                </div>
+            </div>
+
+            <!-- FOV Calculation (Collapsible) -->
+            <details class="control-group fov-details">
+              <summary>FOV Calculation</summary>
+              <!-- This content is hidden until user clicks the arrow -->
+              <div class="fov-calc-content">
+                  <label for="horiz-fov">Horizontal FOV (°):</label>
+                  <input 
+                    type="number" 
+                    id="horiz-fov" 
+                    min="0" 
+                    step="0.1" 
+                    value="60"
+                  >
+
+                  <label for="fov-distance">Distance to Target (units):</label>
+                  <input 
+                    type="number" 
+                    id="fov-distance" 
+                    min="0" 
+                    step="0.1" 
+                    value="10"
+                  >
+
+                  <button id="fov-calc-button">Calculate Pixel Size</button>
+
+                  <div>
+                    Pixel Size: <span id="pixel-size-output">N/A</span>
+                  </div>
+              </div>
+            </details>
+        </div>
+    </div>
+
+    <!-- Info Box (for anomaly details) -->
+    <div id="info-box" class="info-box">
+        <span id="info-box-close" class="info-box-close">×</span>
+        <div id="info-box-content"></div>
+    </div>
+
+    <!-- Heatmap Popup -->
+    <div id="heatmap-popup" class="heatmap-popup hidden">
+        <h3>Anomaly Heatmap</h3>
+        <canvas id="heatmap-canvas"></canvas>
+        <button id="close-heatmap">Close</button>
+    </div>
+
+    <!-- Zoom Box (hidden by default) -->
+    <div id="zoom-box" class="zoom-box hidden">
+        <h3>Zoomed Anomaly</h3>
+        <canvas id="zoom-canvas" width="200" height="200"></canvas>
+        <button id="close-zoom-box">Close</button>
+    </div>
+  
+
+    <!-- Main script with detection logic + FOV calculation code -->
+    <script src="script-v3.1.js" defer></script>
+</body>
+</html>
